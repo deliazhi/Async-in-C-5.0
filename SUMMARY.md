@@ -1,0 +1,20 @@
+# Summary
+
+* [Introduction](README.md)
+* [0.前言](0_preface.md)
+* [1.概述](1_introduction.md)
+* [2.为什么需要异步编程](2_why.md)
+* [3.手动编写异步代码](3_mannually.md)
+* [4.编写Async方法](4_async.md)
+* [5.await究竟做了什么](5_await.md)
+* [6.基于Task的异步编程模式](6_TAP.md)
+* [7.异步代码的套路](7_utilities.md)
+* [8.异步代码运行在哪个线程](8_thread.md)
+* [9.异步代码的异常](9_exception.md)
+* [10.异步并发](10_parallelism.md)
+* [11.异步代码的单元测试](11_unitTest.md)
+* [12.ASP.NET应用中的异步](12_dotNet.md)
+* [13.WinRT应用中的异步](13_winRT.md)
+* [14.异步中的底层编译转换](14_compiler.md)
+* [15.异步代码的性能](15_performance.md)
+

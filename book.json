@@ -1,0 +1,19 @@
+{
+    "title": "Async in C# 5.0（中文翻译版）",
+    "author": "Delia <DeliaZhi@gmail.com>",
+    "description": "Async in C# 5.0中文翻译版。",
+    "links": {
+        "sidebar": {
+            "博客": "http://deliazhi.com/",
+            "View on GitHub": ""
+        }
+    },
+    "plugins": [
+        "github"
+    ],
+    "pluginsConfig": {
+        "github": {
+            "url": "https://github.com/deliazhi"
+        }
+    }
+}
