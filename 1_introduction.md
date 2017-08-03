@@ -35,14 +35,67 @@
 它以两个关键词出现：
 + async
 + await
+
 它还依赖.NET Framework4.5的其他一些附件和变化来发挥作用。
+
 > Async是C#编译器的一个特性，不能被封装成一个类库。它对你的源代码起到了一个转换的作用，就如同C#之前版本中的Lambda和迭代器一样。
 
 这个特性通过免除早期C#所需的复杂模式使异步编程变得非常简单，有了它，我们可以用一种异步风格编写整个项目了。
 
 ### Async做了什么
+async特性是一种简单易读的异步行为，表明了耗时操作完成之后要继续执行的代码。
 
+异步方法经过编译器的转换，让一步代码看上去和阻塞代码别无二致。这有一段简单的下单网页的阻塞代码：
+```C#
+private void DumpWebPage(string uri)
+{
+    WebClient webClient = new WebClient();
+    string page = webClient.DownloadString(uri);
+    Console.WriteLine(page);
+} 
+```
+这里还有一段实现相同功能的async代码：
+```C#
+private async void DumpWebPageAsync(string uri)
+{
+    WebClient webClient = new WebClient();
+    string page = await webClient.DownloadStringTaskAsync(uri);
+    Console.WriteLine(page);
+}
+```
+它们看上去极为相似，但实际上，它们有着很大的不同。
 
+被标记为async的方法需要有await关键字的方法，并且为了遵循惯例，我们通常会在这个方法名后面添加Async后缀。
 
+有趣的是await关键字。当编译器遇到它时，编译器会将方法分开。事实上编译器所做的事情是相当复杂的，所以我将介绍一个便于理解的假设。
 
+1. 所有await之后的方法都将被分离成另一个单独的方法。
+2. 我们使用一个名为DownloadStringTaskAsync的方法来代替DownloadString方法，这两个方法功能相同，只不过DownloadStringTaskAsync是异步的。
+3. 这意味着当这个操作完成时，我们可以继续执行一个新的方法。稍后我将告诉你如何用一些神奇的方式将它实现。
+4. 当下载完成，它将返回给我们一个可用的字符串，以便输出到控制台
 
+```C#
+private void DumpWebPageAsync(string uri)
+{
+    WebClient webClient = new WebClient();
+    webClient.DownloadStringTaskAsync(uri) <- magic(SecondHalf);
+}
+private void SecondHalf(string awaitedResult)
+{
+    string page = awaitedResult;
+    Console.WriteLine(page);
+} 
+```
+运行这段代码时，调用线程发生了什么？当运行到DownloadStringTaskAsync时，开始下载，但不是在当前线程进行下载。在当前线程中，我们已经到达了方法的结尾并return了。当前线程下一步要做什么取决于调用者。如果是一个UI线程，它将返回执行用户操作。否则，它的资源将被释放。这也意味着我已经在写异步代码啦！
+
+### 异步编程并不能解决所有问题
+
+async特性被设计得尽可能像阻塞代码。我们可以通过异步调用的方式将耗时操作或者远程操作处理得就像本地操作一样快。
+
+然而，这样的设计并不会为了让你忘记后台操作和回调的发生。当你使用async的时候，还需要小心很多事情，包括：
++ 异常以及异常处理
++ 方法的返回值
++ 线程以及上下文
++ 性能
+
+如果不能真正理解发生了什么，你的应用程序很可能以意想不到的方式挂掉，而你也无法理解错误信息或者通过调试去修复它。
