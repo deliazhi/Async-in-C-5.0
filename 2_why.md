@@ -90,6 +90,8 @@ Windows Phone的Silverlight，就像它的全名一样，是一种轻量级的�
 
 ![图2-1.图标浏览运行结果](/img/Figure 2-1.png)
 
+图2-1.图标浏览运行结果 
+
 让我们看一看代码是怎么写的吧。最重要的部分就是下载图标并且将它添加到窗口中的WPF WrapPanel。
 ```C#
 private void AddAFavicon(string domain)
