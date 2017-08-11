@@ -98,3 +98,50 @@ Task的优势在于，DNS里只需要一个方法，使API更简洁了。与调�
 最重要的是，Task让我们能够以一种抽象的方式处理异步操作。我们可以利用这种可组合性来编写一些实用工具，可以和Task配合提供一些在很多情况下都非常有用的功能。我们将在第七章看到更多这样的实用工具。
 
 ### 手动编写异步代码的问题
+正如我们所看到的，有许多方式可以实现异步编程。有些方式比较简洁。但希望你已经发现，他们有一个缺点。实现的过程必须被分成两部分：方法和回调。使用一个匿名方法或者Lambda作为回调在某种程度上可以缓解这个问题，但你的代码会被过度简化，难以阅读和维护。
+
+还有一个问题，我们已经讨论了实现一个异步回调的方法，但如果需要多个回调会发生什么呢？更糟的是，如果你要在一个循环中调用异步方法又会发生什么呢？你唯一的选择是比普通循环更加难以阅读的递归方法。
+```C#
+private void LookupHostNames(string[] hostNames)
+{
+    LookUpHostNamesHelper(hostNames, 0);
+}
+private static void LookUpHostNamesHelper(string[] hostNames, int i)
+{
+    Task<IPAddress[]> ipAddressesPromise = Dns.GetHostAddressesAsync(hostNames[i]);
+    ipAddressesPromise.ContinueWith(_ =>
+    {
+        IPAddress[] ipAddresses = ipAddressesPromise.Result;   
+        // Do something with address
+        ...
+        if (i + 1 < hostNames.Length)
+        {
+            LookUpHostNamesHelper(hostNames, i + 1);
+        }
+    });
+}
+```
+天哪！
+采用这些方式手动编写异步代码还会引发另一个问题，就是消耗你所编写的异步代码。如果你写了一些异步代码，想要在你程序的其他地方使用，你必须提供一个异步API的使用说明。使用一个异步API看上去已经很困难很复杂了，再提供一个异步API的使用说明会双倍的困难和复杂。异步代码的复杂度是会蔓延的，所以您不仅要处理异步api，而且您的调用者和他们的调用者也要处理，直到整个程序一团糟。
+### 使用手动编写的异步代码
+再看第二章的最后一个示例，我们讨论了一个WPF UI的应用程序，在下载网站的图标时阻塞了UI线程导致程序无响应。现在我们看看如何使用本章手动的技术来让它变成异步的方式。
+
+首先就是要找到一个异步API，我使用的是WebClient.DownloadData。正如我们已经看到的，WebClient使用的是基于事件的异步模式（EAP），所以，我们可以注册一个事件句柄作为回调，然后开始下载。
+```C#
+private void AddAFavicon(string domain)
+{
+    WebClient webClient = new WebClient();
+    webClient.DownloadDataCompleted += OnWebClientOnDownloadDataCompleted;
+    webClient.DownloadDataAsync(new Uri("http://" + domain + "/favicon.ico"));
+}
+private void OnWebClientOnDownloadDataCompleted(object sender,
+    DownloadDataCompletedEventArgs args)
+{
+    Image imageControl = MakeImageControl(args.Result);
+    m_WrapPanel.Children.Add(imageControl);
+}
+```
+
+当然，我们的整体逻辑需要被分成两种方法。我不喜欢用Lambda代替EAP，因为Lambda会出现在调用下载之前，这是我觉得难以理解的地方。
+
+这个例子的[源码](https://bitbucket.org/alexdavies74/faviconbrowser)，在manual分支。如果你运行它会发现，UI可响应了，图标也是一个一个出现的。也因此，我们引入了一个Bug。现在，所有的下载操作都是同时开始的，图标的排列顺序是根据下载完成的先后顺序去显示的，而不是我们的请求顺序去显示的。如果你想检验一下自己是否真的理解了手动编写异步代码是如何工作的，我建议你修复这个bug。orderedManual分支下有一个可用的解决方案，包括把循环转换为递归的方法。可能也有其他的解决方案。
